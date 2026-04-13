@@ -2,22 +2,25 @@
 
 A Model Context Protocol (MCP) server for integrating with Bitbucket Cloud and Server APIs. This MCP server enables AI assistants like Cursor to interact with your Bitbucket repositories, pull requests, and other resources.
 
+**PJdfr fork:** adds the `createRepository` tool and is published to npm as [`@pjdfr/bitbucket-mcp`](https://www.npmjs.com/package/@pjdfr/bitbucket-mcp) with MCP Registry name `io.github.PJdfr/bitbucket-mcp`. Upstream: [MatanYemini/bitbucket-mcp](https://github.com/MatanYemini/bitbucket-mcp).
+
 ## Safety First
 
 This is a safe and responsible package — no DELETE operations are used, so there's no risk of data loss.
 Every pull request is analyzed with CodeQL to ensure the code remains secure.
 
-[![CodeQL](https://github.com/MatanYemini/bitbucket-mcp/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/MatanYemini/bitbucket-mcp/actions/workflows/github-code-scanning/codeql)
-[![GitHub Repository](https://img.shields.io/badge/GitHub-Repository-blue.svg)](https://github.com/MatanYemini/bitbucket-mcp)
+[![CodeQL](https://github.com/PJdfr/bitbucket-mcp/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/PJdfr/bitbucket-mcp/actions/workflows/github-code-scanning/codeql)
+[![GitHub Repository](https://img.shields.io/badge/GitHub-Repository-blue.svg)](https://github.com/PJdfr/bitbucket-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![npm version](https://badge.fury.io/js/bitbucket-mcp.svg)](https://www.npmjs.com/package/bitbucket-mcp)
+[![npm version](https://badge.fury.io/js/@pjdfr%2Fbitbucket-mcp.svg)](https://www.npmjs.com/package/@pjdfr/bitbucket-mcp)
 
 ## Overview
 
-Checkout out the [official npm package](https://www.npmjs.com/package/bitbucket-mcp)
+Install this fork from npm as [`@pjdfr/bitbucket-mcp`](https://www.npmjs.com/package/@pjdfr/bitbucket-mcp); the [original package](https://www.npmjs.com/package/bitbucket-mcp) remains `bitbucket-mcp`.
 This server implements the Model Context Protocol standard to provide AI assistants with access to Bitbucket data and operations. It includes tools for:
 
 - Listing and retrieving repositories
+- Creating repositories (Bitbucket Cloud 2.0 API; this fork)
 - Getting repository details
 - Fetching pull requests
 - And more...
@@ -36,13 +39,13 @@ BITBUCKET_URL="https://api.bitbucket.org/2.0" \
 BITBUCKET_WORKSPACE="your-workspace" \
 BITBUCKET_USERNAME="your-username" \
 BITBUCKET_PASSWORD="your-app-password" \
-npx -y bitbucket-mcp@latest
+npx -y @pjdfr/bitbucket-mcp@latest
 
 # Option B (legacy-compatible): web URL only; workspace is auto-extracted
 BITBUCKET_URL="https://bitbucket.org/your-workspace" \
 BITBUCKET_USERNAME="your-username" \
 BITBUCKET_PASSWORD="your-app-password" \
-npx -y bitbucket-mcp@latest
+npx -y @pjdfr/bitbucket-mcp@latest
 ```
 
 ### Manual Installation
@@ -51,10 +54,10 @@ Alternatively, you can install it globally or as part of your project:
 
 ```bash
 # Install globally
-npm install -g bitbucket-mcp
+npm install -g @pjdfr/bitbucket-mcp
 
 # Or install in your project
-npm install bitbucket-mcp
+npm install @pjdfr/bitbucket-mcp
 ```
 
 Then run it with:
@@ -78,13 +81,13 @@ BITBUCKET_URL="https://api.bitbucket.org/2.0" \
 BITBUCKET_WORKSPACE="your-workspace" \
 BITBUCKET_USERNAME="your-username" \
 BITBUCKET_PASSWORD="your-app-password" \
-npx bitbucket-mcp
+npx @pjdfr/bitbucket-mcp
 
 # If installed in your project (Option B - legacy-compatible)
 BITBUCKET_URL="https://bitbucket.org/your-workspace" \
 BITBUCKET_USERNAME="your-username" \
 BITBUCKET_PASSWORD="your-app-password" \
-npx bitbucket-mcp
+npx @pjdfr/bitbucket-mcp
 ```
 
 ## Configuration
@@ -113,7 +116,7 @@ Either `BITBUCKET_TOKEN` or both `BITBUCKET_USERNAME` and `BITBUCKET_PASSWORD` m
 1. Log in to your Bitbucket account
 2. Go to Personal Settings > App Passwords
 3. Create a new app password with the following permissions:
-   - Repositories: Read
+   - Repositories: Read, **Admin** (admin required for `createRepository`)
    - Pull requests: Read, Write
    - Pipelines: Read (required for pipeline operations)
 4. Copy the generated password and use it as the `BITBUCKET_PASSWORD` environment variable
@@ -172,7 +175,7 @@ To integrate this MCP server with Cursor:
     "BITBUCKET_USERNAME": "your-username",
     "BITBUCKET_PASSWORD": "your-app-password"
   },
-  "args": ["-y", "bitbucket-mcp@latest"]
+  "args": ["-y", "@pjdfr/bitbucket-mcp@latest"]
 }
 ```
 
@@ -231,6 +234,20 @@ Gets details for a specific repository.
 
 - `workspace`: Bitbucket workspace name
 - `repo_slug`: Repository slug
+
+#### `createRepository`
+
+Creates a new repository in a workspace using `POST /2.0/repositories/{workspace}/{repo_slug}` (Bitbucket Cloud). Requires a token or app password with repository **admin** permission.
+
+**Parameters:**
+
+- `workspace` (optional): Bitbucket workspace; defaults to `BITBUCKET_WORKSPACE` when set
+- `repo_slug` (required): Slug for the new repository
+- `description` (optional): Repository description
+- `is_private` (optional): Defaults to `true` (private repository)
+- `scm` (optional): Must be `git` when provided; defaults to `git`
+- `project_key` (optional): Bitbucket Cloud project key to attach the repo to
+- `fork_policy` (optional): One of `allow_forks`, `no_public_forks`, `no_forks`
 
 ### Pull Request Operations
 
@@ -712,7 +729,7 @@ Gets logs for a specific pipeline step.
 
 ```bash
 # Clone the repository
-git clone https://github.com/MatanYemini/bitbucket-mcp.git
+git clone https://github.com/PJdfr/bitbucket-mcp.git
 cd bitbucket-mcp
 
 # Install dependencies
@@ -734,15 +751,14 @@ everything that guide expects:
    ```bash
    npm run build
    ```
-2. Generate the registry manifest (this reads `package.json` and emits `registry/bitbucket-mcp.manifest.json`):
+2. Generate the registry manifest (this reads `package.json` and emits `registry/<slug>.manifest.json`, e.g. `registry/pjdfr-bitbucket-mcp.manifest.json`):
    ```bash
    npm run registry:manifest
    ```
-3. Follow the [publish-server guide](https://github.com/modelcontextprotocol/registry/blob/main/docs/guides/publishing/publish-server.md)
-   to push the manifest with `smithery publish` or the recommended workflow from the guide.
+3. Publish the npm package (`npm publish --access public`), then use the official [`mcp-publisher`](https://modelcontextprotocol.io/registry/quickstart) CLI (`mcp-publisher login github` and `mcp-publisher publish`) with the root `server.json`.
 
 The generated manifest captures the CLI command (`node dist/index.js`), all documented configuration options, and pointers back to
-this README for setup instructions, so it can be submitted directly to the MCP registry.
+this README for setup instructions, so it can be submitted to the MCP registry.
 
 ## License
 
@@ -750,8 +766,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Links
 
-- [GitHub Repository](https://github.com/MatanYemini/bitbucket-mcp)
-- [npm Package](https://www.npmjs.com/package/bitbucket-mcp)
+- [GitHub Repository (this fork)](https://github.com/PJdfr/bitbucket-mcp)
+- [npm Package (this fork)](https://www.npmjs.com/package/@pjdfr/bitbucket-mcp)
+- [Upstream GitHub](https://github.com/MatanYemini/bitbucket-mcp)
 - [Model Context Protocol](https://modelcontextprotocol.io/)
 - [Bitbucket REST API Documentation](https://developer.atlassian.com/cloud/bitbucket/rest/intro/)
 - [Bitbucket Cloud Documentation](https://support.atlassian.com/bitbucket-cloud/)

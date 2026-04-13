@@ -1,14 +1,14 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-10-17/server.schema.json",
-  "name": "io.github.MatanYemini/bitbucket-mcp",
-  "title": "Bitbucket MCP",
-  "description": "Model Context Protocol (MCP) server for Bitbucket Cloud and Server API integration",
-  "version": "5.0.5",
+  "name": "io.github.PJdfr/bitbucket-mcp",
+  "title": "Bitbucket MCP (PJdfr fork)",
+  "description": "MCP server for Bitbucket Cloud/Server. PJdfr fork adds createRepository tool.",
+  "version": "5.1.0",
   "packages": [
     {
       "registryType": "npm",
-      "identifier": "bitbucket-mcp",
-      "version": "5.0.5",
+      "identifier": "@pjdfr/bitbucket-mcp",
+      "version": "5.1.0",
       "transport": {
         "type": "stdio"
       }

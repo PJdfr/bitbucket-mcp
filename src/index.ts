@@ -611,6 +611,50 @@ class BitbucketServer {
           },
         },
         {
+          name: "createRepository",
+          description:
+            "Create a new Bitbucket repository (Bitbucket Cloud 2.0 API). Workspace defaults to BITBUCKET_WORKSPACE when omitted.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              workspace: {
+                type: "string",
+                description:
+                  "Bitbucket workspace name (optional if BITBUCKET_WORKSPACE is set)",
+              },
+              repo_slug: {
+                type: "string",
+                description: "Repository slug (name) for the new repository",
+              },
+              description: {
+                type: "string",
+                description: "Optional repository description",
+              },
+              is_private: {
+                type: "boolean",
+                description:
+                  "Whether the repository is private (defaults to true)",
+              },
+              scm: {
+                type: "string",
+                enum: ["git"],
+                description: "SCM type (only git is supported)",
+              },
+              project_key: {
+                type: "string",
+                description:
+                  "Optional Bitbucket Cloud project key to assign the repository to",
+              },
+              fork_policy: {
+                type: "string",
+                enum: ["allow_forks", "no_public_forks", "no_forks"],
+                description: "Fork policy for the new repository",
+              },
+            },
+            required: ["repo_slug"],
+          },
+        },
+        {
           name: "getPullRequests",
           description: "Get pull requests for a repository",
           inputSchema: {
@@ -1896,6 +1940,16 @@ class BitbucketServer {
               args.workspace as string,
               args.repo_slug as string
             );
+          case "createRepository":
+            return await this.createRepository(
+              args.workspace as string | undefined,
+              args.repo_slug as string,
+              args.description as string | undefined,
+              args.is_private as boolean | undefined,
+              args.scm as string | undefined,
+              args.project_key as string | undefined,
+              args.fork_policy as string | undefined
+            );
           case "getPullRequests":
             return await this.getPullRequests(
               args.workspace as string,
@@ -2367,6 +2421,92 @@ class BitbucketServer {
       throw new McpError(
         ErrorCode.InternalError,
         `Failed to get repository: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
+    }
+  }
+
+  async createRepository(
+    workspace: string | undefined,
+    repo_slug: string,
+    description?: string,
+    is_private?: boolean,
+    scm?: string,
+    project_key?: string,
+    fork_policy?: string
+  ) {
+    try {
+      const wsName = workspace || this.config.defaultWorkspace;
+
+      if (!wsName) {
+        throw new McpError(
+          ErrorCode.InvalidParams,
+          "Workspace must be provided either as a parameter or through BITBUCKET_WORKSPACE environment variable"
+        );
+      }
+
+      const slug = (repo_slug ?? "").trim();
+      if (!slug) {
+        throw new McpError(
+          ErrorCode.InvalidParams,
+          "repo_slug is required and must be a non-empty string"
+        );
+      }
+
+      const scmType = scm && scm.trim().length > 0 ? scm.trim() : "git";
+      if (scmType !== "git") {
+        throw new McpError(
+          ErrorCode.InvalidParams,
+          'Only scm "git" is supported for createRepository'
+        );
+      }
+
+      logger.info("Creating Bitbucket repository", {
+        workspace: wsName,
+        repo_slug: slug,
+        is_private: is_private !== false,
+      });
+
+      const body: Record<string, unknown> = {
+        scm: scmType,
+        is_private: is_private !== false,
+      };
+
+      if (description !== undefined && description !== null) {
+        body.description = String(description);
+      }
+
+      if (fork_policy) {
+        body.fork_policy = fork_policy;
+      }
+
+      if (project_key && project_key.trim().length > 0) {
+        body.project = { key: project_key.trim() };
+      }
+
+      const response = await this.api.post(
+        `/repositories/${wsName}/${encodeURIComponent(slug)}`,
+        body
+      );
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(response.data, null, 2),
+          },
+        ],
+      };
+    } catch (error) {
+      logger.error("Error creating repository", {
+        error,
+        workspace,
+        repo_slug,
+      });
+      throw new McpError(
+        ErrorCode.InternalError,
+        `Failed to create repository: ${
           error instanceof Error ? error.message : String(error)
         }`
       );
